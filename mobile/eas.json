@@ -9,10 +9,26 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBIe6E16TsCPvgXfRQ7g4l15RN5opGx70s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "android-lcars.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "android-lcars",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "android-lcars.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "209650454402",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:209650454402:web:7ec41471363d272d46c99b"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBIe6E16TsCPvgXfRQ7g4l15RN5opGx70s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "android-lcars.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "android-lcars",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "android-lcars.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "209650454402",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:209650454402:web:7ec41471363d272d46c99b"
+      }
     }
   },
   "submit": {
