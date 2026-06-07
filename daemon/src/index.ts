@@ -92,7 +92,7 @@ function watchBrain() {
     }
   });
 
-  watcher.on('change', (filePath) => {
+  const handleFile = (filePath: string) => {
     // Extract conversationId from path: .../brain/<conversationId>/.system_generated/logs/transcript.jsonl
     const parts = filePath.split(path.sep);
     // Find index of 'brain' and get the next directory name
@@ -100,7 +100,7 @@ function watchBrain() {
     if (brainIdx === -1 || brainIdx + 1 >= parts.length) return;
     const conversationId = parts[brainIdx + 1];
 
-    console.log(`[Watcher] Change detected in conversation: ${conversationId}`);
+    console.log(`[Watcher] Event triggered for conversation: ${conversationId}`);
     
     // Throttle sync to avoid flooding Firebase on successive line additions
     if (syncTimeoutMap.has(conversationId)) {
@@ -113,7 +113,10 @@ function watchBrain() {
     }, 1500);
 
     syncTimeoutMap.set(conversationId, timeout);
-  });
+  };
+
+  watcher.on('add', handleFile);
+  watcher.on('change', handleFile);
 
   watcher.on('error', (error) => {
     console.error('[Watcher] Watcher error:', error);
