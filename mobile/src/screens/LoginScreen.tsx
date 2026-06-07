@@ -148,7 +148,6 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 150,
     opacity: 0.15,
-    blur: 100, // Conceptually, styled via opacity/radius on mobile
   },
   card: {
     width: '100%',
