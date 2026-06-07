@@ -72,3 +72,4 @@ node_modules/
 service-account.json
 daemon/dist/
 daemon/out/
+*.apk
