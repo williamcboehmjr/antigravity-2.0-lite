@@ -73,6 +73,16 @@ export default function ChatScreen({ conversationId, title, onBack }: ChatScreen
     return () => unsubscribe();
   }, []);
 
+  // 2.5. Auto Scroll to End when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length]);
+
   // 3. Send Message Command
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
