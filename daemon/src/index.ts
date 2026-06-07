@@ -169,26 +169,16 @@ async function syncConversation(conversationId: string, filePath: string) {
       // ignore
     }
 
-    // Write to Firestore
+    // Write to Firestore (save messages directly as an array on the conversation document)
     await db.collection('conversations').doc(conversationId).set({
       conversationId,
       title,
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      messageCount: parsedMessages.length
+      messageCount: parsedMessages.length,
+      messages: parsedMessages
     }, { merge: true });
 
-    // Write messages to subcollection
-    const messagesBatch = db.batch();
-    const messagesCollection = db.collection('conversations').doc(conversationId).collection('messages');
-    
-    // For simplicity in a single-user app, we overwrite/set the messages matching their index
-    parsedMessages.forEach((msg) => {
-      const docRef = messagesCollection.doc(String(msg.index));
-      messagesBatch.set(docRef, msg);
-    });
-
-    await messagesBatch.commit();
-    console.log(`[Sync] Successfully synced ${parsedMessages.length} messages for ${conversationId}`);
+    console.log(`[Sync] Successfully synced ${parsedMessages.length} messages on document for ${conversationId}`);
   } catch (error) {
     console.error(`[Sync] Error syncing conversation ${conversationId}:`, error);
   }

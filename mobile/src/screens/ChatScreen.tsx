@@ -31,26 +31,22 @@ export default function ChatScreen({ conversationId, title, onBack }: ChatScreen
 
   // 1. Listen to Messages
   useEffect(() => {
-    const q = query(
-      collection(db, 'conversations', conversationId, 'messages'),
-      orderBy('index', 'asc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs: Message[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        msgs.push({
-          id: doc.id,
-          index: data.index,
-          step_index: data.step_index,
-          source: data.source,
-          type: data.type,
-          content: data.content,
-          timestamp: data.timestamp,
-          status: data.status
-        });
-      });
-      setMessages(msgs);
+    const docRef = doc(db, 'conversations', conversationId);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const msgs = (data.messages || []).map((msg: any) => ({
+          id: String(msg.index),
+          index: msg.index,
+          step_index: msg.step_index ?? msg.index,
+          source: msg.source,
+          type: msg.type,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          status: msg.status
+        }));
+        setMessages(msgs);
+      }
     });
 
     return () => unsubscribe();
