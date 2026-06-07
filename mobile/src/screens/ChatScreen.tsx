@@ -61,7 +61,7 @@ export default function ChatScreen({ conversationId, title, onBack }: ChatScreen
         const heartbeat = data.heartbeat?.toDate();
         if (heartbeat) {
           const diffMs = Date.now() - heartbeat.getTime();
-          setDaemonOnline(data.status === 'online' && diffMs < 60000);
+          setDaemonOnline(data.status === 'online' && Math.abs(diffMs) < 300000); // 5m tolerance
         } else {
           setDaemonOnline(false);
         }

@@ -62,7 +62,7 @@ export default function DashboardScreen({ onSelectConversation }: DashboardScree
         const heartbeat = data.heartbeat?.toDate();
         if (heartbeat) {
           const diffMs = Date.now() - heartbeat.getTime();
-          const isOnline = data.status === 'online' && diffMs < 60000; // Online if pinged in last 60s
+          const isOnline = data.status === 'online' && Math.abs(diffMs) < 300000; // Online if pinged in last 5m (handles clock skew)
           setDaemonOnline(isOnline);
           setDaemonHeartbeat(heartbeat.toLocaleTimeString());
         } else {
