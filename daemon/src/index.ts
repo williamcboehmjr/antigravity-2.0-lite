@@ -131,7 +131,7 @@ async function syncConversation(conversationId: string, filePath: string) {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.trim().split('\n').filter(Boolean);
     
-    const parsedMessages = lines.map((line, idx) => {
+    let parsedMessages = lines.map((line, idx) => {
       try {
         const obj = JSON.parse(line);
         return {
@@ -156,6 +156,12 @@ async function syncConversation(conversationId: string, filePath: string) {
       }
     });
 
+    // Truncate to avoid Firestore 1MB document size limit on very long conversation logs
+    if (parsedMessages.length > 300) {
+      console.log(`[Sync] Truncating conversation ${conversationId} from ${parsedMessages.length} to last 300 messages to fit Firestore limit.`);
+      parsedMessages = parsedMessages.slice(-300);
+    }
+
     // Check metadata like task title or plan status in sibling files
     const parentDir = path.dirname(path.dirname(path.dirname(filePath))); // up to brain/<conversationId>
     let title = conversationId;
@@ -172,11 +178,14 @@ async function syncConversation(conversationId: string, filePath: string) {
       // ignore
     }
 
+    const stats = fs.statSync(filePath);
+    const lastModified = stats.mtime;
+
     // Write to Firestore (save messages directly as an array on the conversation document)
     await db.collection('conversations').doc(conversationId).set({
       conversationId,
       title,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: lastModified,
       messageCount: parsedMessages.length,
       messages: parsedMessages
     }, { merge: true });
@@ -197,34 +206,38 @@ function listenForCommands() {
   
   db.collection('commands')
     .where('status', '==', 'pending')
-    .orderBy('created_at', 'asc')
     .onSnapshot(async (snapshot) => {
       if (snapshot.empty) return;
 
-      for (const change of snapshot.docChanges()) {
-        if (change.type === 'added') {
-          const doc = change.doc;
-          const commandData = doc.data();
-          const commandId = doc.id;
-          
-          console.log(`[Command Listener] Received command: ${commandData.command} (${commandId})`);
-          
-          // Set status to processing
-          await doc.ref.update({
-            status: 'processing',
-            started_at: admin.firestore.FieldValue.serverTimestamp()
-          });
+      // Sort docs locally to avoid Firebase composite indexing constraint
+      const sortedChanges = snapshot.docChanges().filter(c => c.type === 'added').sort((a, b) => {
+        const timeA = a.doc.data().created_at?.toDate?.()?.getTime() || 0;
+        const timeB = b.doc.data().created_at?.toDate?.()?.getTime() || 0;
+        return timeA - timeB;
+      });
 
-          try {
-            await executeCommand(commandData.command, commandData.args, doc.ref);
-          } catch (err: any) {
-            console.error(`[Command Listener] Execution failed for command ${commandId}:`, err);
-            await doc.ref.update({
-              status: 'failed',
-              error: err.message || 'Unknown execution error',
-              ended_at: admin.firestore.FieldValue.serverTimestamp()
-            });
-          }
+      for (const change of sortedChanges) {
+        const doc = change.doc;
+        const commandData = doc.data();
+        const commandId = doc.id;
+        
+        console.log(`[Command Listener] Received command: ${commandData.command} (${commandId})`);
+        
+        // Set status to processing
+        await doc.ref.update({
+          status: 'processing',
+          started_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        try {
+          await executeCommand(commandData.command, commandData.args, doc.ref);
+        } catch (err: any) {
+          console.error(`[Command Listener] Execution failed for command ${commandId}:`, err);
+          await doc.ref.update({
+            status: 'failed',
+            error: err.message || 'Unknown execution error',
+            ended_at: admin.firestore.FieldValue.serverTimestamp()
+          });
         }
       }
     }, (error) => {
