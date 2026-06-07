@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Checks if request is authenticated and email matches owner
+    function isOwner() {
+      return request.auth != null && request.auth.token.email == 'pychobj2001@gmail.com';
+    }
+
+    match /{document=**} {
+      allow read, write: if isOwner();
+    }
+  }
+}
